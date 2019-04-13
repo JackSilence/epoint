@@ -1,0 +1,36 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.18.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+
+group = 'epoint'
+version = new Date().format('yyyyMMdd')
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter-actuator')
+	compile('org.springframework.boot:spring-boot-devtools')
+	compile('org.springframework.boot:spring-boot-starter-web')
+	
+	compile('com.sendgrid:sendgrid-java:4.0.1')
+	compile('org.seleniumhq.selenium:selenium-java:2.53.1')
+	compile('io.github.bonigarcia:webdrivermanager:3.3.0')
+	compile('net.sourceforge.tess4j:tess4j:4.3.1')
+	
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+}

@@ -1,0 +1,9 @@
+/.gradle/
+/.settings/
+/bin/
+/build/
+.classpath
+.DS_Store
+.project
+*.jar
+*.traineddata
