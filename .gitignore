@@ -5,5 +5,4 @@
 .classpath
 .DS_Store
 .project
-*.jar
 *.traineddata
