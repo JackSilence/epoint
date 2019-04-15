@@ -56,6 +56,17 @@ public class Point implements IService {
 	@Value( "${GOOGLE_CHROME_SHIM:}" )
 	private String bin;
 
+	static {
+		try {
+			System.out.println( "System.getProperty(\"java.library.path\"): " + System.getProperty( "java.library.path" ) );
+			System.load( "/app/vendor/tesseract-ocr/lib/libtesseract.so" );
+
+		} catch ( UnsatisfiedLinkError e ) {
+			System.err.println( "Native code library failed to load.\n" + e );
+
+		}
+	}
+
 	@Override
 	@Scheduled( cron = "0 0 11,18 * * *" )
 	public void exec() {
