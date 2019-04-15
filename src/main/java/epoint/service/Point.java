@@ -59,7 +59,7 @@ public class Point implements IService {
 	static {
 		try {
 			System.out.println( "System.getProperty(\"java.library.path\"): " + System.getProperty( "java.library.path" ) );
-			System.load( "/app/vendor/tesseract-ocr/lib/libtesseract.so" );
+			System.load( "/app/vendor/tesseract-ocr/lib/libtesseract.so.3.0.4" );
 
 		} catch ( UnsatisfiedLinkError e ) {
 			System.err.println( "Native code library failed to load.\n" + e );
