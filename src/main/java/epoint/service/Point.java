@@ -42,7 +42,7 @@ public class Point implements IService {
 
 	private static final String DATA_URI = "data:image/png;base64,%s", IMAGE = "<img src='%s'>";
 
-	private static final String DATA_PATH = "\\src\\main\\resources\\tesseract\\";
+	private static final String LOCAL_DATA_PATH = "\\src\\main\\resources\\tesseract\\";
 
 	@Autowired
 	private IMailService service;
@@ -107,11 +107,15 @@ public class Point implements IService {
 
 			if ( bin.isEmpty() ) {
 				// 本機才用resources底下的, server上看TESSDATA_PREFIX
-				tesseract.setDatapath( System.getProperty( "user.dir" ) + DATA_PATH );
+				tesseract.setDatapath( System.getProperty( "user.dir" ) + LOCAL_DATA_PATH );
 
 			}
 
-			find( driver, "#signin-captcha" ).sendKeys( StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE ) );
+			String code = StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE );
+
+			sb.append( "驗證碼：" + code ).append( "<br>" );
+
+			find( driver, "#signin-captcha" ).sendKeys( code );
 
 			find( driver, "#btnLogin" ).click();
 
