@@ -98,7 +98,7 @@ public class Point implements IService {
 
 		String content = String.format( Utils.getResourceAsString( TEMPLATE ), result.getBefore(), result.getAfter(), result.getText() );
 
-		service.send( "epoint_" + new SimpleDateFormat( "yyyyMMddHH" ).format( new Date() ), content );
+		service.send( "點數查詢_" + new SimpleDateFormat( "yyyyMMddHH" ).format( new Date() ), content );
 	}
 
 	private void handle( WebDriver driver, Result result, int count ) throws IOException, TesseractException {
