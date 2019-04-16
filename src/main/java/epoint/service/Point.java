@@ -66,6 +66,7 @@ public class Point implements IService {
 	public void exec() {
 		WebDriver driver = init();
 
+		// Heroku上用mobileEmulation或設定手機的user-agent會有問題... 所以才這樣設定連結
 		driver.get( "https://www.treemall.com.tw/casso/login?service=https://m.treemall.com.tw/member/pointlist" );
 
 		find( driver, "#signin-account" ).sendKeys( Utils.decode( account ) );
@@ -86,6 +87,7 @@ public class Point implements IService {
 		StringBuilder sb = new StringBuilder();
 
 		try {
+			// 模擬成iphoneX的話, 四個數字都要 * 3
 			BufferedImage image = ImageIO.read( screenshot ).getSubimage( x, y, width, height );
 
 			sb.append( String.format( IMAGE, file( image ) ) ).append( "<br>" );
@@ -103,7 +105,11 @@ public class Point implements IService {
 
 			Tesseract tesseract = new Tesseract();
 
-			tesseract.setDatapath( System.getProperty( "user.dir" ) + DATA_PATH );
+			if ( bin.isEmpty() ) {
+				// 本機才用resources底下的, server上看TESSDATA_PREFIX
+				tesseract.setDatapath( System.getProperty( "user.dir" ) + DATA_PATH );
+
+			}
 
 			find( driver, "#signin-captcha" ).sendKeys( StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE ) );
 
