@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -40,9 +41,9 @@ import net.sourceforge.tess4j.TesseractException;
 public class Point implements IService {
 	private final Logger log = LoggerFactory.getLogger( this.getClass() );
 
-	private static final String DATA_URI = "data:image/png;base64,%s", IMAGE = "<img src='%s'>";
+	private static final String TEMPLATE = "/epoint/template/template.html", ROW = "/epoint/template/row.html";
 
-	private static final String LOCAL_DATA_PATH = "\\src\\main\\resources\\tesseract\\";
+	private static final String DATA_URI = "data:image/png;base64,%s", LOCAL_DATA_PATH = "/src/main/resources/tesseract/";
 
 	@Autowired
 	private IMailService service;
@@ -57,6 +58,11 @@ public class Point implements IService {
 	private String bin;
 
 	static {
+		// Buildpacks:
+		// heroku/gradle
+		// https://github.com/heroku/heroku-buildpack-apt
+		// https://github.com/heroku/heroku-buildpack-chromedriver
+		// https://github.com/heroku/heroku-buildpack-google-chrome
 		System.setProperty( "jna.library.path", "/app/.apt/usr/lib/x86_64-linux-gnu" );
 
 	}
@@ -86,11 +92,13 @@ public class Point implements IService {
 
 		StringBuilder sb = new StringBuilder();
 
+		String row = Utils.getResourceAsString( ROW ), before = StringUtils.EMPTY, after = StringUtils.EMPTY, code;
+
 		try {
 			// 模擬成iphoneX的話, 四個數字都要 * 3
 			BufferedImage image = ImageIO.read( screenshot ).getSubimage( x, y, width, height );
 
-			sb.append( String.format( IMAGE, file( image ) ) ).append( "<br>" );
+			before = file( image );
 
 			IntStream.range( 0, image.getWidth() ).forEach( i -> IntStream.range( 0, image.getHeight() ).forEach( j -> {
 				Color color = new Color( image.getRGB( i, j ) );
@@ -101,7 +109,7 @@ public class Point implements IService {
 
 			} ) );
 
-			sb.append( String.format( IMAGE, file( image ) ) ).append( "<br>" );
+			after = file( image );
 
 			Tesseract tesseract = new Tesseract();
 
@@ -111,9 +119,7 @@ public class Point implements IService {
 
 			}
 
-			String code = StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE );
-
-			sb.append( "驗證碼：" + code ).append( "<br>" );
+			sb.append( String.format( row, "驗證碼", code = StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE ) ) );
 
 			find( driver, "#signin-captcha" ).sendKeys( code );
 
@@ -122,7 +128,12 @@ public class Point implements IService {
 			sleep();
 
 			driver.findElements( By.cssSelector( "div.point-detail > ul.user-point" ) ).forEach( i -> {
-				sb.append( i.getText().trim() ).append( "<br>" );
+				String[] result = StringUtils.split( i.getText().trim(), "：" );
+
+				if ( ArrayUtils.getLength( result ) == 2 ) {
+					sb.append( String.format( row, result[ 0 ], result[ 1 ].replaceAll( "[^\\d]", "" ) ) );
+
+				}
 			} );
 
 		} catch ( IOException | TesseractException | NoSuchElementException | UnhandledAlertException e ) {
@@ -132,7 +143,9 @@ public class Point implements IService {
 
 		driver.quit();
 
-		service.send( "epoint_" + new SimpleDateFormat( "yyyyMMddHH" ).format( new Date() ), sb.toString() );
+		String time = new SimpleDateFormat( "yyyyMMddHH" ).format( new Date() );
+
+		service.send( "epoint_" + time, String.format( Utils.getResourceAsString( TEMPLATE ), before, after, sb.toString() ) );
 	}
 
 	private WebDriver init() {
