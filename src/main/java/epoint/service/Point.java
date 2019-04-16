@@ -52,10 +52,13 @@ public class Point implements IService {
 	@Autowired
 	private IMailService service;
 
-	@Value( "${treemall.account}" )
+	@Value( "${point.url}" )
+	private String url;
+
+	@Value( "${point.account}" )
 	private String account;
 
-	@Value( "${treemall.password}" )
+	@Value( "${point.password}" )
 	private String password;
 
 	@Value( "${GOOGLE_CHROME_SHIM:}" )
@@ -77,7 +80,7 @@ public class Point implements IService {
 		WebDriver driver = init();
 
 		// Heroku上用mobileEmulation或設定手機的user-agent會有問題... 所以才這樣設定連結
-		driver.get( "https://www.treemall.com.tw/casso/login?service=https://m.treemall.com.tw/member/pointlist" );
+		driver.get( url );
 
 		Result result = new Result();
 

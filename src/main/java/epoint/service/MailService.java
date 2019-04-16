@@ -25,7 +25,7 @@ public class MailService implements IMailService {
 	@Override
 	public void send( String subject, String content ) {
 		try {
-			Email from = new Email( "notice@treemall.com" ), to = new Email( "lethington@gmail.com" );
+			Email from = new Email( "notice@heroku.com" ), to = new Email( "lethington@gmail.com" );
 
 			Request request = new Request();
 
