@@ -14,6 +14,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
@@ -32,6 +33,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import epoint.model.Result;
 import epoint.util.Utils;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import net.sourceforge.tess4j.Tesseract;
@@ -40,6 +42,8 @@ import net.sourceforge.tess4j.TesseractException;
 @Service
 public class Point implements IService {
 	private final Logger log = LoggerFactory.getLogger( this.getClass() );
+
+	private static final int START_COUNT = 1, MAX_RETRY = 10;
 
 	private static final String TEMPLATE = "/epoint/template/template.html", ROW = "/epoint/template/row.html";
 
@@ -75,7 +79,28 @@ public class Point implements IService {
 		// Heroku上用mobileEmulation或設定手機的user-agent會有問題... 所以才這樣設定連結
 		driver.get( "https://www.treemall.com.tw/casso/login?service=https://m.treemall.com.tw/member/pointlist" );
 
-		find( driver, "#signin-account" ).sendKeys( Utils.decode( account ) );
+		Result result = new Result();
+
+		try {
+			find( driver, "#signin-account" ).sendKeys( Utils.decode( account ) );
+
+			handle( driver, result, START_COUNT );
+
+		} catch ( IOException | TesseractException | NoSuchElementException e ) {
+			log.error( "", e );
+
+		}
+
+		driver.quit();
+
+		String content = String.format( Utils.getResourceAsString( TEMPLATE ), result.getBefore(), result.getAfter(), result.getText() );
+
+		service.send( "epoint_" + new SimpleDateFormat( "yyyyMMddHH" ).format( new Date() ), content );
+	}
+
+	private void handle( WebDriver driver, Result result, int count ) throws IOException, TesseractException {
+		String row = Utils.getResourceAsString( ROW ), code;
+
 		find( driver, "#signin-password" ).sendKeys( Utils.decode( password ) );
 
 		( ( JavascriptExecutor ) driver ).executeScript( "$('.cd-form img').css('padding-left', '0');" );
@@ -90,37 +115,33 @@ public class Point implements IService {
 
 		int x = point.getX(), y = point.getY(), width = size.getWidth(), height = size.getHeight();
 
-		StringBuilder sb = new StringBuilder();
+		// 模擬成iphoneX的話, 四個數字都要 * 3
+		BufferedImage image = ImageIO.read( screenshot ).getSubimage( x, y, width, height );
 
-		String row = Utils.getResourceAsString( ROW ), before = StringUtils.EMPTY, after = StringUtils.EMPTY, code;
+		result.setBefore( file( image ) );
+
+		IntStream.range( 0, image.getWidth() ).forEach( i -> IntStream.range( 0, image.getHeight() ).forEach( j -> {
+			Color color = new Color( image.getRGB( i, j ) );
+
+			int avg = ( color.getRed() + color.getGreen() + color.getBlue() ) / 3;
+
+			image.setRGB( i, j, ( avg <= 30 ? Color.BLACK : Color.WHITE ).getRGB() );
+
+		} ) );
+
+		result.setAfter( file( image ) );
+
+		Tesseract tesseract = new Tesseract();
+
+		if ( bin.isEmpty() ) {
+			// 本機才用resources底下的, server上看TESSDATA_PREFIX
+			tesseract.setDatapath( System.getProperty( "user.dir" ) + LOCAL_DATA_PATH );
+
+		}
+
+		result.setText( String.format( row, "驗證碼", code = StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE ) ) );
 
 		try {
-			// 模擬成iphoneX的話, 四個數字都要 * 3
-			BufferedImage image = ImageIO.read( screenshot ).getSubimage( x, y, width, height );
-
-			before = file( image );
-
-			IntStream.range( 0, image.getWidth() ).forEach( i -> IntStream.range( 0, image.getHeight() ).forEach( j -> {
-				Color color = new Color( image.getRGB( i, j ) );
-
-				int avg = ( color.getRed() + color.getGreen() + color.getBlue() ) / 3;
-
-				image.setRGB( i, j, ( avg <= 30 ? Color.BLACK : Color.WHITE ).getRGB() );
-
-			} ) );
-
-			after = file( image );
-
-			Tesseract tesseract = new Tesseract();
-
-			if ( bin.isEmpty() ) {
-				// 本機才用resources底下的, server上看TESSDATA_PREFIX
-				tesseract.setDatapath( System.getProperty( "user.dir" ) + LOCAL_DATA_PATH );
-
-			}
-
-			sb.append( String.format( row, "驗證碼", code = StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE ) ) );
-
 			find( driver, "#signin-captcha" ).sendKeys( code );
 
 			find( driver, "#btnLogin" ).click();
@@ -128,24 +149,31 @@ public class Point implements IService {
 			sleep();
 
 			driver.findElements( By.cssSelector( "div.point-detail > ul.user-point" ) ).forEach( i -> {
-				String[] result = StringUtils.split( i.getText().trim(), "：" );
+				String[] text = StringUtils.split( i.getText().trim(), "：" );
 
-				if ( ArrayUtils.getLength( result ) == 2 ) {
-					sb.append( String.format( row, result[ 0 ], result[ 1 ].replaceAll( "[^\\d]", "" ) ) );
+				if ( ArrayUtils.getLength( text ) == 2 ) {
+					result.setText( result.getText() + String.format( row, text[ 0 ], text[ 1 ].replaceAll( "[^\\d]", "" ) ) );
 
 				}
 			} );
 
-		} catch ( IOException | TesseractException | NoSuchElementException | UnhandledAlertException e ) {
-			log.error( "", e );
+		} catch ( UnhandledAlertException e ) {
+			Alert alert = driver.switchTo().alert();
+
+			log.info( "Alert data: {}, count: {}", alert.getText(), count );
+
+			alert.accept();
+
+			if ( count >= MAX_RETRY ) {
+				log.info( "Max retry count exceeded!" );
+
+				return;
+
+			}
+
+			handle( driver, result, ++count );
 
 		}
-
-		driver.quit();
-
-		String time = new SimpleDateFormat( "yyyyMMddHH" ).format( new Date() );
-
-		service.send( "epoint_" + time, String.format( Utils.getResourceAsString( TEMPLATE ), before, after, sb.toString() ) );
 	}
 
 	private WebDriver init() {
