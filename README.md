@@ -2,7 +2,7 @@
 
 機制: 將此應用程式部署在Heroku上, 透過UptimeRobot定時監控避免使用Heroku免費帳號的休眠問題
 
-Point - 透過Selenium + Headless Chrome自動登入帳號後獲取點數頁面資訊,
+Point - 透過Selenium + Headless Chrome自動登入帳號後獲取點數頁面資訊, 用SendGrid寄出通知信.
 
 登入驗證碼使用Tess4j + Tesseract進行OCR解析後得到, 驗證碼錯誤時會自動重試
 
