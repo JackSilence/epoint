@@ -56,6 +56,11 @@ public class Point implements IService {
 	@Value( "${GOOGLE_CHROME_SHIM:}" )
 	private String bin;
 
+	static {
+		System.setProperty( "jna.library.path", "/app/.apt/usr/lib/x86_64-linux-gnu" );
+
+	}
+
 	@Override
 	@Scheduled( cron = "0 0 11,18 * * *" )
 	public void exec() {
