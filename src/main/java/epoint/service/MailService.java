@@ -22,10 +22,13 @@ public class MailService implements IMailService {
 	@Value( "${sendgrid.api.key:}" )
 	private String key;
 
+	@Value( "${sendgrid.mail.to:}" )
+	private String mail;
+
 	@Override
 	public void send( String subject, String content ) {
 		try {
-			Email from = new Email( "notice@heroku.com" ), to = new Email( "lethington@gmail.com" );
+			Email from = new Email( "notice@heroku.com" ), to = new Email( mail );
 
 			Request request = new Request();
 
