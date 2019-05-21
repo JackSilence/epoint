@@ -2,24 +2,17 @@ package epoint.service;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.stream.IntStream;
 
-import javax.imageio.ImageIO;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Alert;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -94,18 +87,7 @@ public class Point extends Selenium {
 
 		script( driver, "$('.cd-form img').css('padding-left', '0');" );
 
-		WebElement element = find( driver, "img.inline" );
-
-		File screenshot = ( ( TakesScreenshot ) driver ).getScreenshotAs( OutputType.FILE );
-
-		org.openqa.selenium.Point point = element.getLocation();
-
-		Dimension size = element.getSize();
-
-		int x = point.getX(), y = point.getY(), width = size.getWidth(), height = size.getHeight();
-
-		// 模擬成iphoneX的話, 四個數字都要 * 3
-		BufferedImage image = ImageIO.read( screenshot ).getSubimage( x, y, width, height );
+		BufferedImage image = screenshot( driver, find( driver, "img.inline" ) );
 
 		result.setBefore( base64( image ) );
 
