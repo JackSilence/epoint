@@ -26,7 +26,7 @@ repositories {
 }
 
 dependencies {
-	compile('com.github.JackSilence:magic:f2e56f57a7')
+	compile('com.github.JackSilence:magic:b1129234b1')
 	
 	compile('org.springframework.boot:spring-boot-starter-actuator')
 	compile('org.springframework.boot:spring-boot-devtools')
