@@ -4,6 +4,6 @@ logging:
   level:
     root: INFO
   pattern:
-    console: "[%d] %p %C{0}:%L - %m%n"
+    console: "[%d][%t] %p %C{0}.%M:%L - %m%n"
 server:
   port: 5278
