@@ -3,5 +3,7 @@ app:
 logging:
   level:
     root: INFO
+  pattern:
+    console: "[%d] %p %C{0}:%L - %m%n"
 server:
   port: 5278
