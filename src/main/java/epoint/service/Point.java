@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import epoint.model.Result;
 import magic.service.IMailService;
 import magic.service.Selenium;
+import magic.service.Slack;
 import magic.util.Utils;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -30,6 +31,9 @@ public class Point extends Selenium {
 	private static final int START_COUNT = 1, MAX_RETRY = 10;
 
 	private static final String TEMPLATE = "/epoint/template/template.html", ROW = "/epoint/template/row.html";
+
+	@Autowired
+	private Slack slack;
 
 	@Autowired
 	private IMailService service;
@@ -116,14 +120,22 @@ public class Point extends Selenium {
 
 			sleep();
 
-			list( driver, "div.point-detail > ul.user-point" ).forEach( i -> {
-				String[] text = StringUtils.split( i.getText().trim(), "：" );
+			StringBuilder sb = new StringBuilder();
 
-				if ( ArrayUtils.getLength( text ) == 2 ) {
-					result.setText( result.getText() + String.format( row, text[ 0 ], text[ 1 ].replaceAll( "[^\\d]", "" ) ) );
+			list( driver, "div.point-detail > ul.user-point" ).forEach( i -> {
+				String text = i.getText();
+
+				sb.append( text ).append( "\n" );
+
+				String[] data = StringUtils.split( text.trim(), "：" );
+
+				if ( ArrayUtils.getLength( data ) == 2 ) {
+					result.setText( result.getText() + String.format( row, data[ 0 ], data[ 1 ].replaceAll( "[^\\d]", "" ) ) );
 
 				}
 			} );
+
+			slack.message( sb.toString() );
 
 		} catch ( UnhandledAlertException e ) {
 			Alert alert = driver.switchTo().alert();
