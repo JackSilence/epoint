@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import epoint.model.Result;
 import magic.service.IMailService;
 import magic.service.Selenium;
-import magic.service.Slack;
 import magic.util.Utils;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -32,8 +31,7 @@ public class Point extends Selenium {
 
 	private static final String TEMPLATE = "/epoint/template/template.html", ROW = "/epoint/template/row.html";
 
-	@Autowired
-	private Slack slack;
+	private static final String LOCAL_DATA_PATH = "/src/main/resources/tesseract/";
 
 	@Autowired
 	private IMailService service;
@@ -108,8 +106,10 @@ public class Point extends Selenium {
 
 		Tesseract tesseract = new Tesseract();
 
-		// 本機才用resources底下的, server上看TESSDATA_PREFIX
-		// tesseract.setDatapath( System.getProperty( "user.dir" ) + "/src/main/resources/tesseract/" );
+		if ( bin.isEmpty() ) {
+			// 本機才用resources底下的, server上看TESSDATA_PREFIX
+			tesseract.setDatapath( System.getProperty( "user.dir" ) + LOCAL_DATA_PATH );
+		}
 
 		result.setText( String.format( row, "驗證碼", code = StringUtils.remove( tesseract.doOCR( image ), StringUtils.SPACE ) ) );
 
