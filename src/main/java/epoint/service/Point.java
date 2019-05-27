@@ -75,7 +75,7 @@ public class Point extends Selenium {
 			handle( driver, result, START_COUNT );
 
 		} catch ( IOException | TesseractException | NoSuchElementException e ) {
-			log.error( "", e );
+			throw new RuntimeException( e );
 
 		}
 
