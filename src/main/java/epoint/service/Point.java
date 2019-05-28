@@ -3,8 +3,6 @@ package epoint.service;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -22,6 +20,8 @@ import epoint.model.Result;
 import magic.service.IMailService;
 import magic.service.Selenium;
 import magic.util.Utils;
+import net.gpedro.integrations.slack.SlackAttachment;
+import net.gpedro.integrations.slack.SlackMessage;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 
@@ -77,9 +77,11 @@ public class Point extends Selenium {
 
 		}
 
-		String content = String.format( Utils.getResourceAsString( TEMPLATE ), result.getBefore(), result.getAfter(), result.getText() );
+		String before = result.getBefore(), after = result.getAfter(), text = result.getText(), subject;
 
-		service.send( "點數查詢_" + new SimpleDateFormat( "yyyyMMddHH" ).format( new Date() ), content );
+		service.send( subject = Utils.subject( "點數查詢" ), String.format( Utils.getResourceAsString( TEMPLATE ), before, after, text ) );
+
+		slack.call( new SlackMessage( subject ).addAttachments( new SlackAttachment( subject ).setText( result.getMessage() ) ) );
 	}
 
 	private void handle( WebDriver driver, Result result, int count ) throws IOException, TesseractException {
@@ -135,7 +137,7 @@ public class Point extends Selenium {
 				}
 			} );
 
-			slack.message( sb.toString() );
+			result.setMessage( sb.toString() );
 
 		} catch ( UnhandledAlertException e ) {
 			Alert alert = driver.switchTo().alert();

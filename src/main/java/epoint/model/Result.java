@@ -1,7 +1,7 @@
 package epoint.model;
 
 public class Result {
-	private String before, after, text;
+	private String before, after, text, message;
 
 	public String getBefore() {
 		return before;
@@ -25,5 +25,13 @@ public class Result {
 
 	public void setText( String text ) {
 		this.text = text;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage( String message ) {
+		this.message = message;
 	}
 }
