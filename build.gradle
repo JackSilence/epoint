@@ -17,7 +17,8 @@ repositories {
 }
 
 dependencies {
-	compile('com.github.JackSilence:magic:453481b7aa')
+	compile('com.github.JackSilence:magic:5c4233fc90')
 	
 	compile('com.sendgrid:sendgrid-java:4.0.1')
+	compile('net.sourceforge.tess4j:tess4j:4.3.1')
 }
