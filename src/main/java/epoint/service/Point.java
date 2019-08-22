@@ -77,11 +77,11 @@ public class Point extends Selenium {
 
 		}
 
-		String before = result.getBefore(), after = result.getAfter(), text = result.getText(), subject;
+		String before = result.getBefore(), after = result.getAfter(), text = result.getText(), message = result.getMessage(), subject;
 
 		service.send( subject = Utils.subject( "點數查詢" ), String.format( Utils.getResourceAsString( TEMPLATE ), before, after, text ) );
 
-		slack.call( new SlackMessage( subject ).addAttachments( new SlackAttachment( subject ).setText( result.getMessage() ) ) );
+		slack.call( new SlackMessage( "" ).addAttachments( new SlackAttachment( message ).setText( message ).setPretext( subject ) ) );
 	}
 
 	private void handle( WebDriver driver, Result result, int count ) throws IOException, TesseractException {
